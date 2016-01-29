@@ -242,7 +242,7 @@
         <td>escape</td>
         <td>data-escape</td>
         <td>Boolean</td>
-        <td>true</td>
+        <td>false</td>
         <td>转义HTML字符串，替换 <code>&</code>, <code><</code>,
         <code>></code>, <code>"</code>, <code>`</code>, 和 <code>'</code> 字符.</td>
     </tr>
@@ -252,6 +252,13 @@
         <td>Boolean</td>
         <td>false</td>
         <td>Enable the search input.</td>
+    </tr>
+    <tr>
+        <td>searchOnEnterKey</td>
+        <td>data-search-on-enter-key</td>
+        <td>Boolean</td>
+        <td>false</td>
+        <td>The search method will be executed until the Enter key is pressed.</td>
     </tr>
     <tr>
         <td>strictSearch</td>

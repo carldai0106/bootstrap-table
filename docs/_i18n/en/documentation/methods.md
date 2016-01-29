@@ -161,6 +161,8 @@ The calling method syntax: `$('#table').bootstrapTable('method', parameter);`.
         index: the row index. <br>
         field: the field name.<br>
         value: the new field value.
+        <br>
+        To disable table re-initialization you can set <code>{reinit: false}</code>
         </td>
     </tr>
     <tr>
@@ -192,6 +194,11 @@ The calling method syntax: `$('#table').bootstrapTable('method', parameter);`.
         <td>uncheckAll</td>
         <td>none</td>
         <td>Uncheck all current page rows.</td>
+    </tr>
+    <tr>
+        <td>checkInvert</td>
+        <td>none</td>
+        <td>Invert check of current page rows. Triggers onCheckSome and onUncheckSome events.</td>
     </tr>
     <tr>
         <td>check</td>

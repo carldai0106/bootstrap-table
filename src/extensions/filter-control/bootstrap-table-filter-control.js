@@ -9,14 +9,11 @@
     'use strict';
 
     var sprintf = $.fn.bootstrapTable.utils.sprintf;
-    $.extend($.fn.bootstrapTable.defaults.icons, {
-        clear: 'glyphicon-trash icon-clear'
-    });
 
     var addOptionToSelectControl = function (selectControl, value, text) {
         value = $.trim(value);
         selectControl = $(selectControl.get(selectControl.length - 1));
-        if (existsOptionInSelectControl(selectControl, value)) {
+        if (existOptionInSelectControl(selectControl, value)) {
             selectControl.append($("<option></option>")
                 .attr("value", value)
                 .text($('<div />').html(text).text()));
@@ -39,11 +36,11 @@
         }
     };
 
-    var existsOptionInSelectControl = function (selectControl, value) {
+    var existOptionInSelectControl = function (selectControl, value) {
         var options = selectControl.get(selectControl.length - 1).options;
         for (var i = 0; i < options.length; i++) {
             if (options[i].value === value.toString()) {
-                //The value is nor valid to add
+                //The value is not valid to add
                 return false;
             }
         }
@@ -78,10 +75,10 @@
         var header = getCurrentHeader(that),
             searchControls = getCurrentSearchControls(that);
 
-        that.options.values = [];
+        that.options.valuesFilterControl = [];
 
         header.find(searchControls).each(function () {
-            that.options.values.push(
+            that.options.valuesFilterControl.push(
                 {
                     field: $(this).closest('[data-field]').data('field'),
                     value: $(this).val()
@@ -95,10 +92,10 @@
             header = getCurrentHeader(that),
             searchControls = getCurrentSearchControls(that);
 
-        if (that.options.values.length > 0) {
+        if (that.options.valuesFilterControl.length > 0) {
             header.find(searchControls).each(function (index, ele) {
                 field = $(this).closest('[data-field]').data('field');
-                result = $.grep(that.options.values, function (valueObj) {
+                result = $.grep(that.options.valuesFilterControl, function (valueObj) {
                     return valueObj.field === field;
                 });
 
@@ -106,6 +103,24 @@
                     $(this).val(result[0].value);
                 }
             });
+        }
+    };
+
+    var collectBootstrapCookies = function cookiesRegex() {
+        var cookies = [],
+            foundCookies = document.cookie.match(/(?:bs.table.)(\w*)/g);
+
+        if (foundCookies) {
+            $.each(foundCookies, function (i, cookie) {
+                if (/./.test(cookie)) {
+                    cookie = cookie.split(".").pop();
+                }
+
+                if ($.inArray(cookie, cookies) === -1) {
+                    cookies.push(cookie);
+                }
+            });
+            return cookies;
         }
     };
 
@@ -132,7 +147,7 @@
                 if (column.searchable && that.options.filterTemplate[nameControl]) {
                     addedFilterControl = true;
                     isVisible = 'visible';
-                    html.push(that.options.filterTemplate[nameControl](column.field, isVisible));
+                    html.push(that.options.filterTemplate[nameControl](that, column.field, isVisible));
                 }
             }
 
@@ -222,23 +237,39 @@
         }
     };
 
+    var getDirectionOfSelectOptions = function (alignment) {
+        alignment = alignment === undefined ? 'left' : alignment.toLowerCase();
+
+        switch (alignment) {
+            case 'left':
+                return 'ltr';
+            case 'right':
+                return 'rtl';
+            case 'auto':
+                return 'auto';
+            default:
+                return 'ltr'
+        }
+    };
+
     $.extend($.fn.bootstrapTable.defaults, {
         filterControl: false,
         onColumnSearch: function (field, text) {
             return false;
         },
         filterShowClear: false,
-        filterLocal: true,
+        alignmentSelectControlOptions: undefined,
         //internal variables
-        values: [],
+        valuesFilterControl: [],
         filterTemplate: {
-            input: function (field, isVisible) {
+            input: function (that, field, isVisible) {
                 return sprintf('<input type="text" class="form-control %s" style="width: 100%; visibility: %s">', field, isVisible);
             },
-            select: function (field, isVisible) {
-                return sprintf('<select class="%s form-control" style="width: 100%; visibility: %s"></select>', field, isVisible);
+            select: function (that, field, isVisible) {
+                return sprintf('<select class="%s form-control" style="width: 100%; visibility: %s" dir="%s"></select>',
+                    field, isVisible, getDirectionOfSelectOptions(that.options.alignmentSelectControlOptions))
             },
-            datepicker: function (field, isVisible) {
+            datepicker: function (that, field, isVisible) {
                 return sprintf('<input type="text" class="date-filter-control %s form-control" style="width: 100%; visibility: %s">', field, isVisible);
             }
         }
@@ -255,6 +286,10 @@
         'column-search.bs.table': 'onColumnSearch'
     });
 
+    $.extend($.fn.bootstrapTable.defaults.icons, {
+        clear: 'glyphicon-trash icon-clear'
+    });
+
     var BootstrapTable = $.fn.bootstrapTable.Constructor,
         _init = BootstrapTable.prototype.init,
         _initToolbar = BootstrapTable.prototype.initToolbar,
@@ -267,7 +302,7 @@
         if (this.options.filterControl) {
             var that = this;
             //Make sure that the internal variables are set correctly
-            this.options.values = [];
+            this.options.valuesFilterControl = [];
 
             this.$el.on('reset-view.bs.table', function () {
                 //Create controls on $tableHeader if the height is set
@@ -294,6 +329,13 @@
         _init.apply(this, Array.prototype.slice.apply(arguments));
     };
 
+    $.extend($.fn.bootstrapTable.locales, {
+        formatClearFilters: function () {
+            return 'Clear Filters';
+        }
+    });
+    $.extend($.fn.bootstrapTable.defaults, $.fn.bootstrapTable.locales);
+
     BootstrapTable.prototype.initToolbar = function () {
         if ((!this.showToolbar) && (this.options.filterControl)) {
             this.showToolbar = this.options.filterControl;
@@ -307,8 +349,8 @@
 
             if (!$btnClear.length) {
               $btnClear = $([
-                    '<button class="btn btn-default " ' +
-                        'type="button">',
+                    '<button class="btn btn-default" ',
+                    sprintf('type="button" title="%s">', this.options.formatClearFilters()),
                     sprintf('<i class="%s %s"></i> ', this.options.iconsPrefix, this.options.icons.clear),
                     '</button>',
                     '</ul>'].join('')).appendTo($btnGroup);
@@ -366,7 +408,7 @@
     BootstrapTable.prototype.initSearch = function () {
         _initSearch.apply(this, Array.prototype.slice.apply(arguments));
 
-        if (! this.options.filterLocal) {
+        if (!this.options.sidePagination === 'server') {
             return;
         }
 
@@ -387,20 +429,20 @@
                     [value, item, i], value);
                 }
 
-                if(thisColumn.filterStrictSearch){
+                if (thisColumn.filterStrictSearch) {
                     if (!($.inArray(key, that.header.fields) !== -1 &&
                         (typeof value === 'string' || typeof value === 'number') &&
                         value.toString().toLowerCase() === fval.toString().toLowerCase())) {
                         return false;
                     }
                 }
-                else{
+                else {
                     if (!($.inArray(key, that.header.fields) !== -1 &&
                         (typeof value === 'string' || typeof value === 'number') &&
                         (value + '').toLowerCase().indexOf(fval) !== -1)) {
                         return false;
                     }
-                };
+                }
             }
             return true;
         }) : this.data;
@@ -428,22 +470,48 @@
 
     BootstrapTable.prototype.clearFilterControl = function () {
         if (this.options.filterControl && this.options.filterShowClear) {
-            $.each(this.options.values, function (i, item) {
+            var that = this,
+                cookies = collectBootstrapCookies(),
+                header = getCurrentHeader(that),
+                table = header.closest('table'),
+                controls = header.find(getCurrentSearchControls(that)),
+                search = that.$toolbar.find('.search input'),
+                timeoutId = 0;
+
+            $.each(that.options.valuesFilterControl, function (i, item) {
                 item.value = '';
             });
 
-            setValues(this);
+            setValues(that);
 
-            var controls = getCurrentHeader(this).find(getCurrentSearchControls(this)),
-                timeoutId = 0;
-
+            // Clear each type of filter if it exists.
+            // Requires the body to reload each time a type of filter is found because we never know
+            // which ones are going to be present.
             if (controls.length > 0) {
                 this.filterColumnsPartial = {};
-                clearTimeout(timeoutId);
-                timeoutId = setTimeout(function () {
-                    $(controls[0]).trigger(controls[0].tagName === 'INPUT' ? 'keyup' : 'change');
-                }, this.options.searchTimeOut);
+                $(controls[0]).trigger(controls[0].tagName === 'INPUT' ? 'keyup' : 'change');
             }
+
+            if (search.length > 0) {
+                that.resetSearch();
+            }
+
+            // use the default sort order if it exists. do nothing if it does not
+            if (that.options.sortName !== table.data('sortName') || that.options.sortOrder !== table.data('sortOrder')) {
+                var sorter = sprintf(header.find('[data-field="%s"]', $(controls[0]).closest('table').data('sortName')));
+                that.onSort(table.data('sortName'), table.data('sortName'));
+                $(sorter).find('.sortable').trigger('click');
+            }
+
+            // clear cookies once the filters are clean
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(function () {
+                if (cookies && cookies.length > 0) {
+                    $.each(cookies, function (i, item) {
+                        that.deleteCookie(item);
+                    });
+                }
+            }, that.options.searchTimeOut);
         }
     };
 }(jQuery);

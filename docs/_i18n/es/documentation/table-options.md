@@ -234,7 +234,7 @@ Las opciones de la tabla están definidas en `jQuery.fn.bootstrapTable.defaults`
         <td>escape</td>
         <td>data-escape</td>
         <td>Boolean</td>
-        <td>true</td>
+        <td>false</td>
         <td>Escapes a string for insertion into HTML,
         replacing <code>&</code>, <code><</code>, <code>></code>,
         <code>"</code>, <code>`</code>, and <code>'</code> characters.</td>
@@ -245,6 +245,13 @@ Las opciones de la tabla están definidas en `jQuery.fn.bootstrapTable.defaults`
         <td>Boolean</td>
         <td>false</td>
         <td>Habilita el campo para búsqueda.</td>
+    </tr>
+    <tr>
+        <td>searchOnEnterKey</td>
+        <td>data-search-on-enter-key</td>
+        <td>Boolean</td>
+        <td>false</td>
+        <td>El método será ejecutado hasta que la tecla Enter sea presionada.</td>
     </tr>
     <tr>
         <td>strictSearch</td>
